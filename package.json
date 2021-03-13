@@ -1,0 +1,22 @@
+{
+  "name": "RideWithUs",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "dependencies": {
+    "alert": "^5.0.10",
+    "axios": "^0.21.1",
+    "bcrypt": "^5.0.1",
+    "ejs-mate": "^3.0.0",
+    "express": "^4.17.1",
+    "express-session": "^1.17.1",
+    "mongoose": "^5.11.19"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
