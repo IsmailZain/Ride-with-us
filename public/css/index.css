@@ -1,0 +1,26 @@
+body {
+       background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)),
+        url("/img/index.jpg");
+        background-position : center;
+        color : white;
+}
+
+h1{
+    text-align : center;
+}
+p {
+    font-size: 1.3rem;
+    text-align: center;
+    padding-left: 11rem;
+    padding-right: 11rem;
+    transform: translateY(183%);
+}
+.box{
+    display: flex;
+    justify-content: space-around;
+}
+.btn{
+    background: white;
+    color: black;
+    font-weight: 700;
+}

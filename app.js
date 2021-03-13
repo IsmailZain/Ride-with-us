@@ -146,9 +146,9 @@ app.get("/rider/show/:id",authenticateRider, async (req,res) => {
     res.render('rider.ejs', {wantToRide,cabs})
 })
 
-app.get("/rider/:riderId/driver/:cabId", async (req,res) => {
-    const {riderId,cabId} = req.params
-    const rider = await Rider.findById(riderId)
+app.get("/rider/:id/driver/:cabId",authenticateRider, async (req,res) => {
+    const {id,cabId} = req.params
+    const rider = await Rider.findById(id)
     const driver = await Driver.findById(cabId)
     
     if(rider.state === "readytoride")
@@ -174,7 +174,7 @@ app.get("/rider/:riderId/driver/:cabId", async (req,res) => {
         rider.ridingWith = null
         rider.save()
 
-        res.redirect(`/rider/show/${riderId}`)
+        res.redirect(`/rider/show/${id}`)
         
     }
 
@@ -242,6 +242,7 @@ app.get("/journey/driver/:driverId/rider/:riderId", async(req,res) => {
     
 
 })
+
 
 
 
@@ -345,3 +346,9 @@ app.get("/", (req,res) => {
 app.listen(3000, () => {
     console.log(`Serving on port 3000`)
 })
+
+
+// driver logout
+// styles
+// flash
+// index modify
