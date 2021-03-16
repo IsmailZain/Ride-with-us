@@ -4,6 +4,7 @@ const ejsMate = require('ejs-mate');
 const bcrypt = require('bcrypt');
 const session = require('express-session');
 const alert = require('alert')
+const flash = require('connect-flash');
 
 // defining app
 const app = express()
@@ -26,7 +27,8 @@ mongoose.connect('mongodb://localhost/ride-with-us', {useNewUrlParser: true, use
 // max distance
 const MAX_DIST =10
 
-
+// flash
+app.use(flash()) 
 
 app.engine('ejs', ejsMate)
 app.set('view engine', 'ejs');
@@ -41,13 +43,15 @@ app.use(session({ secret: 'notagoodsecret', resave: false,  saveUninitialized: t
 const authenticateDriver = (req,res,next) => {
     const {id} = req.params
     if (!req.session.driver_id) {
-        alert("Log in first Please")
+        req.flash("error" , "You need to Login first please")
+       // alert("Log in first Please")
         return res.redirect('/driver/login')
     }
     else if(id !== req.session.driver_id)
     {
        
-        alert("You dont have access to this")
+        //alert()
+        req.flash("error" , "You dont have access to this")
         return res.redirect(`/driver/show/${req.session.driver_id}`)
     }
     next();
@@ -55,18 +59,26 @@ const authenticateDriver = (req,res,next) => {
 const authenticateRider = (req,res,next) => {
     const {id} = req.params
     if (!req.session.rider_id) {
-        alert("Log in first Please")
+        req.flash("error" , "You need to Login first please")
         return res.redirect('/rider/login')
     }
     else if(id !== req.session.rider_id)
     {
         console.log(id)
         console.log(req.session.rider_id)
-        alert("You dont have access to this")
+        req.flash("error" , "You dont have access to this")
         return res.redirect(`/rider/show/${req.session.rider_id}`)
     }
     next();
 }
+
+
+app.use((req, res, next) => {
+    
+    res.locals.success = req.flash('success');
+    res.locals.error = req.flash('error');
+    next();
+})
 
 
 // api
@@ -97,7 +109,16 @@ app.get("/driver/show/:id",authenticateDriver,async (req,res) => {
     if(!isAvailable && ridingWith)
     {
         
+        req.flash("error", "Finish Your Journey First")
+        
         return res.redirect(`/driver/ride/${id}`)
+    }
+    if(isAvailable)
+    {
+        driver.isAvailable = false;
+        await driver.save()
+        // req.flash("error", "You are currently searching for riders")
+        // return res.redirect(`/driver/ride/${id}`)
     }
 
     //console.log(driver)
@@ -168,7 +189,7 @@ app.get("/rider/:id/driver/:cabId",authenticateRider, async (req,res) => {
     else if(rider.state === "journeycompleted")
     {
         rider.state = "notride"
-       alert("Journey Completed ... Hurray")
+       req.flash("success","Journey Completed ... Hurray")
         rider.history.push(driver)
         rider.wantToRide = false
         rider.ridingWith = null
@@ -184,7 +205,7 @@ app.get("/rider/:id/driver/:cabId",authenticateRider, async (req,res) => {
 })
 
 
-app.get("/driver/ride/:id", async (req,res) => {
+app.get("/driver/ride/:id",authenticateDriver, async (req,res) => {
      //console.log(req.params)
     //console.log(req.query)
     const {id} = req.params
@@ -199,28 +220,23 @@ app.get("/driver/ride/:id", async (req,res) => {
     driver.coordinates = {x : ride['curr-xcoordinate'], y : ride['curr-ycoordinate']}
   
    }
+
+  
+    
    
-    if(!isAvailable && !ridingWith)
-    {
-        driver.isAvailable = true;
-       // console.log(driver)
-        await driver.save()
-        return res.render("driverwait",{driver})
-    }
-    else if(!isAvailable && ridingWith)
+     if(!isAvailable && ridingWith)
     {
         await driver.save()
         const rider = await Rider.findById(ridingWith)
         const rname = rider.username
         return res.render("driverjourney.ejs", {rname,id,ridingWith})
     }
-    else if(isAvailable && !ridingWith)
-    {
+        driver.isAvailable = true
+  
         driver.save()
         return res.render("driverwait",{driver})
-    }
    
-    res.send("Here")
+   
 })
 
 app.get("/journey/driver/:driverId/rider/:riderId", async(req,res) => {
@@ -267,6 +283,7 @@ app.post('/driver/register', async (req, res) => {
     const driver = new Driver({ username, password,coordinates,isAvailable,cab_number })
      await driver.save();
     req.session.driver_id = driver._id;
+    req.flash("success","Registered in Successfully")
      return res.redirect(`/driver/show/${driver._id}`)
    
    
@@ -285,6 +302,7 @@ app.post('/rider/register', async (req, res) => {
     const rider = new Rider({ username, password, wantToRide,  initial_coordinates, destination_coordinates})
     await rider.save();
     req.session.rider_id = rider._id;
+    req.flash("success","Registered in Successfully")
      res.redirect(`/rider/show/${rider._id}`)
   
   
@@ -299,11 +317,12 @@ app.post('/driver/login', async (req, res) => {
     const { username, password } = req.body;
     const foundUser = await Driver.findAndValidate(username, password);
     if (foundUser) {
+        req.flash("success"," Logged in Successfully")
         req.session.driver_id = foundUser._id;
         res.redirect(`/driver/show/${foundUser._id}`)
     }
     else {
-        alert("Username or password is incoreect")
+        req.flash("error","Username or password is incoreect")
         res.redirect('/driver/login')
     }
 })
@@ -314,21 +333,25 @@ app.post('/rider/login', async (req, res) => {
     const { username, password } = req.body;
     const foundUser = await Rider.findAndValidate(username, password);
     if (foundUser) {
+        req.flash("success"," Logged in Successfully")
         req.session.rider_id = foundUser._id;
         res.redirect(`/rider/show/${foundUser._id}`)
     }
     else {
-        alert("Username or password is incoreect")
+       // alert("Username or password is incoreect")
+       req.flash("error", "Username or password is incoreect")
         res.redirect('/rider/login')
     }
 })
 
 app.get('/driver/logout', (req, res) => {
+    req.flash("success", "Logged out successfully")
     req.session.driver_id = null;
     // req.session.destroy();
-    res.redirect('/drive/login');
+    res.redirect('/driver/login');
 })
 app.get('/rider/logout', (req, res) => {
+    req.flash("success", "Logged out successfully")
     req.session.rider_id = null;
     // req.session.destroy();
     res.redirect('/rider/login');

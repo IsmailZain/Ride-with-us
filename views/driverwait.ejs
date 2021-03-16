@@ -12,8 +12,10 @@
   </head>
   <body>
     <main class="container mt-5">
+      <%- include("./partials/flash") %>
 
        <h1>Waiting for Riders to connect ....</h1>
+       <a href="/driver/show/<%= driver._id %>" class="btn btn-danger">Cancel</a>
      
      
   </main>

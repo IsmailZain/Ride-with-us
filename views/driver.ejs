@@ -12,8 +12,13 @@
   </head>
   <body>
     <main class="container mt-5">
+      <%- include("./partials/flash") %>
+        <div class="d-flex justify-content-between align-items-center ">
+          <h1>Hello <%= driver.username %> </h1>
+          <a href = "/driver/logout" class="btn btn-danger">Log out</a>
 
-        <h1>Hello <%= driver.username %> </h1>
+        </div>
+        
         <h2>Ready for Work ??</h2>
         <div class="custom-control custom-switch">
             <input   type="checkbox" class="custom-control-input" id="customSwitches">
